@@ -47,3 +47,21 @@ browser : 定义 npm 包在 browser 环境下的入口文件
 - 如果 npm 包在 web 端和 server 端都允许使用，使用 browser 和 main
 
 其他更加复杂的情况，如 npm 包需要提供 commonJS 与 ESM 等多个规范的多个代码文件，请参考上述使用场景或流程图
+
+### 3. reactivity > reactive
+
+1. weakMap
+
+代理对象时，需判断如果某个对象已经被代理过了，就不要再次代理了
+这里使用内存空间，内存空间使用 weakMap，因为 weakMap 的 key 只能是对象,Map 的 key 可以是其他类型,但如果是对象会浪费一次引用，如果对象被清空了，Map 还会引用这个对象，会造成内存泄漏
+
+2. ES6 proxy + reflect
+   proxy + reflect 反射
+   后续 Object 上的方法会被迁移到 Reflect 上， Object.getPrototypeOf => Reflect.getPrototypeOf
+   以前 target[key] = value 方式设置值可能会失败，比如原型上有这个属性，但是设置不成功。并不会报异常，也没有返回值标识
+   Reflect 方法具备返回值，返回值标识是否设置成功
+   reflect 使用可以不使用 proxy 但是 proxy 必须配合 reflect 一起使用
+
+3. sourceMap 调试
+   tsconfig 需要打开 sourcemap 配置，不然找不到 sourcemap 文件
+   打包输出的文件尾部存在标识 //# sourceMappingURL=reactivity.global.js.map
