@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+    <script>
+      // 副作用函数 在vue整体的模块中没有暴露出来，只是在reactivity模块中暴露出来
+      // 相当于vue2中的watcher
+      let { effect, reactive } = VueReactivity;
+      let state = reactive({ name: 'mh', age: 27, other: 'xxx' });
+      effect(() => {
+        app.innerHTML = state.name + '今年' + state.age + '岁';
+      });
+      effect(() => {
+        app.innerHTML = state.name + '今年' + state.age + '岁';
+      });
+      setTimeout(() => {
+        state.other = 'xxxx'; // 不会触发effect方法, state依赖的属性和effect有关联才会触发，vue2的update是任何属性变了都会重新执行
+      }, 1000);
+    </script>
+  </body>
+</html>

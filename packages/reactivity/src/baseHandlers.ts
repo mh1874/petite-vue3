@@ -4,6 +4,8 @@
 
 import { extend, isObject } from '@vue/shared';
 import { reactive, readonly } from './reactive';
+import { track } from './effect';
+import { TrackOpTypes } from './operators';
 
 const get = createGetter();
 const shallowGet = createGetter(false, true);
@@ -52,6 +54,8 @@ function createGetter(isReadonly = false, shallow = false) {
     const res = Reflect.get(target, key, receiver); // target[key]
     if (!isReadonly) {
       // 可能被改，收集依赖，等会数据变化后更新对应的视图
+      // console.log('执行ef fect时会取值', '收集effect');
+      track(target, TrackOpTypes.GET, key);
     }
     if (shallow) {
       return res;
@@ -70,4 +74,6 @@ function createSetter(shallow = false) {
   return function set(target, key, value, receiver) {
     const result = Reflect.set(target, key, value, receiver); // target[key] = value
   };
+
+  // 当数据更新时，通知对应属性的effect重新执行
 } // 拦截设置功能
