@@ -1,5 +1,47 @@
 ## 一、`Vue3` 架构分析
 
+[Source Code](https://github.com/vuejs/core/tree/main/packages)
+
+![响应式API](./assets/vue3%E5%93%8D%E5%BA%94%E5%BC%8FAPI.png)
+
+### 响应性 API 的实现原理
+
+- 通过 Proxy（代理）：拦截对象中任意属性的变化，包括：属性值的读写、属性的添加、属性的删除等。
+- 通过 Reflect（反射）：对被代理对象的属性进行操作。
+
+## 相关知识点
+
+### 1. reactivity > reactive
+
+1. weakMap
+
+   代理对象时，需判断如果某个对象已经被代理过了，就不要再次代理了
+   这里使用内存空间，内存空间使用 weakMap，因为 weakMap 的 key 只能是对象,Map 的 key 可以是其他类型,但如果是对象会浪费一次引用，如果对象被清空了，Map 还会引用这个对象，会造成内存泄漏
+
+2. ES6 `proxy` + `reflect`
+
+   proxy + reflect 反射
+   后续 Object 上的方法会被迁移到 Reflect 上， Object.getPrototypeOf => Reflect.getPrototypeOf
+   以前 target[key] = value 方式设置值可能会失败，比如原型上有这个属性，但是设置不成功。并不会报异常，也没有返回值标识
+   Reflect 方法具备返回值，返回值标识是否设置成功
+   reflect 使用可以不使用 proxy 但是 proxy 必须配合 reflect 一起使用
+
+   Reflect 对象经常和 Proxy 代理一起使用，原因有三点：
+
+   1. Reflect 提供的所有静态方法和 Proxy 第 2 个 handler 参数方法是一模一样的。Reflect Api 有 13 个静态函数，这与 Proxy 设计是一一对应的。如果 Proxy 一个捕捉器想要将调用转发给对象，则只需使用相同的参数调用  Reflect.<method>  就足够了。这种映射在设计之初就是有意对称的。
+   2. Proxy get/set()方法需要的返回值正是 Reflect 的 get/set 方法的返回值，可以天然配合使用，比直接对象赋值/获取值要更方便和准确。
+   3. receiver 参数具有不可替代性。
+
+   [Reference Document](https://juejin.cn/post/7077755456059342856)
+
+3. sourceMap 调试
+   tsconfig 需要打开 sourcemap 配置，不然找不到 sourcemap 文件
+   打包输出的文件尾部存在标识 //# sourceMappingURL=reactivity.global.js.map
+
+---
+
+## 扩展知识点
+
 ### 1. Monorepo 介绍
 
 管理项目代码的一种方式，在一个项目仓库（repo）中管理多个模块/包（package）
@@ -47,21 +89,3 @@ browser : 定义 npm 包在 browser 环境下的入口文件
 - 如果 npm 包在 web 端和 server 端都允许使用，使用 browser 和 main
 
 其他更加复杂的情况，如 npm 包需要提供 commonJS 与 ESM 等多个规范的多个代码文件，请参考上述使用场景或流程图
-
-### 3. reactivity > reactive
-
-1. weakMap
-
-代理对象时，需判断如果某个对象已经被代理过了，就不要再次代理了
-这里使用内存空间，内存空间使用 weakMap，因为 weakMap 的 key 只能是对象,Map 的 key 可以是其他类型,但如果是对象会浪费一次引用，如果对象被清空了，Map 还会引用这个对象，会造成内存泄漏
-
-2. ES6 proxy + reflect
-   proxy + reflect 反射
-   后续 Object 上的方法会被迁移到 Reflect 上， Object.getPrototypeOf => Reflect.getPrototypeOf
-   以前 target[key] = value 方式设置值可能会失败，比如原型上有这个属性，但是设置不成功。并不会报异常，也没有返回值标识
-   Reflect 方法具备返回值，返回值标识是否设置成功
-   reflect 使用可以不使用 proxy 但是 proxy 必须配合 reflect 一起使用
-
-3. sourceMap 调试
-   tsconfig 需要打开 sourcemap 配置，不然找不到 sourcemap 文件
-   打包输出的文件尾部存在标识 //# sourceMappingURL=reactivity.global.js.map
