@@ -30,6 +30,11 @@
         // state.other = 'xxxx'; // 不会触发effect方法, state依赖的属性和effect有关联才会触发，vue2的update是任何属性变了都会重新执行
         state.arr[100] = 1; // 更改name属性需要重新执行
       }, 1000);
+
+      // 1. effect中的所有属性，都会收集effect track
+      // 2. 当这个属性值发生变化，会重新执行effect trigger
+
+      // effect针对的是对象类型，如果是基本类型，使用ref，会将基本类型转成对象类型，对象中有value属性，指向原来的值
     </script>
   </body>
 </html>
