@@ -10,7 +10,7 @@
     <div id="app"></div>
     <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
     <script>
-      let { effect, reactive, ref, shallowRef } = VueReactivity;
+      let { effect, reactive, ref, shallowRef, toRef } = VueReactivity;
       let name = ref('mh'); // 将普通类型转化成一个对象，这个对象中有value属性 指向原来的值
       console.log('name ==>', name);
       effect(() => {

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+    <script>
+      let { effect, reactive, ref, shallowRef, toRef, toRefs } = VueReactivity;
+      let proxy = reactive({ name: 'mh', age: 27 });
+      // 会提供一个访问name属性的代理
+      // let { name } = proxy; // 解构取出来的只是字符串,失去响应式了，可以用toRef取
+      // let r1 = toRef(proxy, 'name');
+      // let r2 = toRef(proxy, 'age');
+      let { name, age } = toRefs(proxy);
+
+      // r.value = 'xxx'; //会被代理到proxy.name
+      // 若存在多个属性，一个一个写比较麻烦，可以用toRefs
+      effect(() => {
+        app.innerHTML = name.value + age.value; // track
+      });
+      setTimeout(() => {
+        proxy.name = 'xxx'; // trigger
+      }, 1000);
+
+      // reactive 就是响应式api
+      // ref 普通值只能用ref
+      // 想解构 reactive -> toRefs 解构某一个 -> toRef
+      // effect track trigger
+    </script>
+  </body>
+</html>

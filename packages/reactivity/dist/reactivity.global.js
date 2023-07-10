@@ -244,6 +244,10 @@ var VueReactivity = (function (exports) {
       return createRef(value, true);
   }
   // 后续 看vue的源码，基本都是高阶函数，做了类似柯里化的操作
+  const convert = (val) => (isObject(val) ? reactive(val) : val);
+  // beta 版本之前的版本ref就是个对象，因为对象不方便扩展，改成了类
+  // RefImpl经babel转义后是Object.defineProperty 可通过 https://babeljs.io/repl 查看
+  // 基本类型为什么不用proxy, 而是用defineProperty, 因为proxy第一个参数要求是对象
   class RefImpl {
       rawValue;
       shallow;
@@ -253,10 +257,56 @@ var VueReactivity = (function (exports) {
           this.rawValue = rawValue;
           this.shallow = shallow;
           //参数中前面增加修饰符 表示此属性放到了实例上, 不加public，就不会放到this上
+          this._value = shallow ? rawValue : convert(rawValue); // 如果是深度的，需要把里面的都变成响应式的
+      }
+      // 类的属性访问器
+      get value() {
+          // 代理 取值取value，会帮我们代理到_value上
+          // 取值 track 依赖收集
+          track(this, 0 /* TrackOpTypes.GET */, 'value');
+          return this._value;
+      }
+      set value(newValue) {
+          if (hasChanged(newValue, this.rawValue)) {
+              // 判断老值和新值是否有变化
+              this.rawValue = newValue; // 更新老值
+              this._value = this.shallow ? newValue : convert(newValue); // 更新_value
+          }
+          // 设置值 trigger 触发依赖更新 让effect重新执行
+          trigger(this, 1 /* TriggerOpTypes.SET */, 'value', newValue);
       }
   }
   function createRef(rawValue, shallow = false) {
       return new RefImpl(rawValue, shallow);
+  }
+  class ObjectRefImpl {
+      target;
+      key;
+      __v_isRef = true;
+      constructor(target, key) {
+          this.target = target;
+          this.key = key;
+      }
+      get value() {
+          return this.target[this.key]; // 如果原来对象是响应式的，会自动收集依赖
+      }
+      set value(newValue) {
+          this.target[this.key] = newValue; // 如果原来对象是响应式的，会自动更新
+      }
+  }
+  // 类似promisify和promisifyAll
+  // 将某一个key的对应的值 转换成ref 相当于vue3中的响应式解构
+  function toRef(target, key) {
+      // 可以把一个对象的值转换成ref类型
+      return new ObjectRefImpl(target, key);
+  }
+  function toRefs(object) {
+      // object可能是数组或者对象
+      const ret = isArray(object) ? new Array(object.length) : {};
+      for (let key in object) {
+          ret[key] = toRef(object, key);
+      }
+      return ret;
   }
 
   exports.effect = effect;
@@ -266,6 +316,8 @@ var VueReactivity = (function (exports) {
   exports.shallowReactive = shallowReactive;
   exports.shallowReadonly = shallowReadonly;
   exports.shallowRef = shallowRef;
+  exports.toRef = toRef;
+  exports.toRefs = toRefs;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
