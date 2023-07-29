@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+    <script>
+      let { effect, reactive, ref, shallowRef, toRef, toRefs, computed } =
+        VueReactivity;
+      // 缓存 computed effect(lazy) + scheduler + 缓存的标识dirty
+      const age = ref(27);
+
+      const myAge = computed(() => {
+        console.log('runner');
+        return age.value + 10;
+      });
+
+      //   const myAge = computed({
+      //     get() {
+      //       return age.value + 1;
+      //     },
+      //     set(val) {
+      //       age.value = val - 1;
+      //     },
+      //   });
+
+      // 为了能缓存结果增加_dirty标识
+      //   console.log('myAge.value1 ==>', myAge.value);
+      //   console.log('myAge.value2 ==>', myAge.value);
+
+      //   改age的时候，增加scheduler，把dirty变成true，不然值就不会变了，dirty改为true使其能执行自己的更新逻辑
+      //   age.value = 100; // 更新age, myAge不会立刻重新计算
+      //   myAge.value; // 再次计算最新值
+
+      // 在effect中访问这个计算属性，effect中没有age，所以不会改成500，所以也需进行依赖收集，增加track和trigger
+      effect(() => {
+        console.log('myAge.value ==>', myAge.value);
+      });
+      age.value = 500; // 修改age.value，走到trigger，会让myAge.value的dirty变成true，触发effect执行
+    </script>
+  </body>
+</html>
